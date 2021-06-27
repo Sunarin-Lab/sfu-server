@@ -19,7 +19,6 @@ import {
   MediaKind,
   WebRtcTransport,
 } from "mediasoup/lib/types";
-import { Transport } from "mediasoup/src/Transport";
 
 // CONSTANTS
 const httpsServer: HTTPSServer = createHTTPSServer();
@@ -120,10 +119,6 @@ io.on("connection", (socket: Socket) => {
           consumer?.on("transportclose", () => {
             console.log("transport closed");
           });
-
-          // socket.on("consumer-done", () => {
-          //   consumer?.resume();
-          // });
 
           user?.addConsumer(consumer);
 
