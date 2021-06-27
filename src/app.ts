@@ -43,11 +43,13 @@ async function run() {
   startListen();
 }
 
+// START PROCESS
 run().catch((err) => {
   console.error("An error occurred.", err);
   process.exit(1);
 });
 
+// SOCKET IO EVENTS
 io.on("connection", (socket: Socket) => {
   console.log("new client connected with id " + socket.id);
 
@@ -90,6 +92,7 @@ io.on("connection", (socket: Socket) => {
     const user: User = room?.getUser(socket.id);
 
     const router: Router | undefined = room?.router;
+
     const sendTransport:
       | WebRtcTransport
       | undefined = await router?.createWebRtcTransport(webRtcTransportOptions);
@@ -100,8 +103,6 @@ io.on("connection", (socket: Socket) => {
 
     user?.setSendTransport(sendTransport);
     user?.setRecvTransport(recvTransport);
-    room?.addTransport(sendTransport);
-    room?.addTransport(recvTransport);
 
     socket.on("transport-created", async (roomId) => {
       const room = rooms.find((r) => r.roomId == roomId);
@@ -221,7 +222,7 @@ io.on("connection", (socket: Socket) => {
   });
 });
 
-/* *
+/**
  * -------------------------------FUNCTION DEFINITION ------------------------------------
  */
 function startListen() {
