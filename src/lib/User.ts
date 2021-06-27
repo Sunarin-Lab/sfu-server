@@ -5,15 +5,13 @@ export class User {
   private _socketId: string | undefined;
   private _producers?: Array<Producer> | undefined;
   private _consumers?: Array<Consumer> | undefined;
-  private _sendTransports?: Array<WebRtcTransport> | undefined;
-  private _recvTransports?: Array<WebRtcTransport> | undefined;
+  private _sendTransports?: WebRtcTransport | undefined;
+  private _recvTransports?: WebRtcTransport | undefined;
 
   constructor(socketId: string) {
     this._socketId = socketId;
     this._producers = new Array<Producer>();
     this._consumers = new Array<Consumer>();
-    this._sendTransports = new Array<WebRtcTransport>();
-    this._recvTransports = new Array<WebRtcTransport>();
   }
 
   get producers(): any {
@@ -32,11 +30,27 @@ export class User {
     return this._consumers?.find((t) => t?.id == consumerId);
   }
 
+  get getRecvTransport(): any {
+    return this._recvTransports;
+  }
+
+  get getSendTransport(): any {
+    return this._sendTransports;
+  }
+
+  public setRecvTransport(recvTransport: any): void {
+    this._recvTransports = recvTransport;
+  }
+
+  public setSendTransport(sendTransport: any): void {
+    this._sendTransports = sendTransport;
+  }
+
   public addProducer(producer: Producer) {
     this._producers?.push(producer);
   }
 
-  public addConsumer(consumer: Consumer) {
-    this._consumers?.push(consumer);
+  public addConsumer(consumer: any) {
+    this._consumers?.push(consumer!);
   }
 }

@@ -88,21 +88,27 @@ io.on("connection", (socket: Socket) => {
    */
   socket.on("synced", async (roomId) => {
     const room = rooms.find((r) => r.roomId == roomId);
+    const user: User = room?.getUser(socket.id);
 
     const router: Router | undefined = room?.router;
-    const transport:
+    const sendTransport:
       | WebRtcTransport
       | undefined = await router?.createWebRtcTransport(webRtcTransportOptions);
 
     const recvTransport:
       | WebRtcTransport
       | undefined = await router?.createWebRtcTransport(webRtcTransportOptions);
-    room?.addTransport(transport);
+
+    user?.setSendTransport(sendTransport);
+    user?.setRecvTransport(recvTransport);
+    room?.addTransport(sendTransport);
     room?.addTransport(recvTransport);
 
     socket.on("transport-created", async (roomId) => {
       const room = rooms.find((r) => r.roomId == roomId);
+      const user: User = room?.getUser(socket.id);
 
+      // Get all producers of existing user in room
       room?.users.forEach((u: any) => {
         u.producers.forEach(async (p: any) => {
           const consumer = await recvTransport?.consume({
@@ -111,11 +117,15 @@ io.on("connection", (socket: Socket) => {
             paused: true,
           });
 
-          socket.on("consumer-done", () => {
-            consumer?.resume();
+          consumer?.on("transportclose", () => {
+            console.log("transport closed");
           });
 
-          u?.addConsumer(consumer);
+          // socket.on("consumer-done", () => {
+          //   consumer?.resume();
+          // });
+
+          user?.addConsumer(consumer);
 
           socket.emit("new-consumer", {
             id: consumer?.id,
@@ -126,16 +136,14 @@ io.on("connection", (socket: Socket) => {
         });
       });
 
+      // Receiver Transport 'connect' event
       socket.once("connect-receive", (roomId, data) => {
         const room = rooms.find((r) => r.roomId == roomId);
+        const user: User = room?.getUser(socket.id);
 
-        const transport:
-          | WebRtcTransport
-          | undefined
-          | Transport = room?.getOneTransport(data.transportId);
+        const transport: WebRtcTransport | undefined = user?.getRecvTransport;
 
         try {
-          console.log("Connecting ");
           transport?.connect({ dtlsParameters: data.dtlsParameters });
         } catch (err) {
           console.error("Error Connection ", err);
@@ -143,14 +151,15 @@ io.on("connection", (socket: Socket) => {
       });
     });
 
+    // Emit Transport option to creating user's side transport
     socket.emit(
       "transport-options",
       {
-        id: transport?.id,
-        iceParameters: transport?.iceParameters,
-        iceCandidates: transport?.iceCandidates,
-        dtlsParameters: transport?.dtlsParameters,
-        sctpParameters: transport?.sctpParameters,
+        id: sendTransport?.id,
+        iceParameters: sendTransport?.iceParameters,
+        iceCandidates: sendTransport?.iceCandidates,
+        dtlsParameters: sendTransport?.dtlsParameters,
+        sctpParameters: sendTransport?.sctpParameters,
       },
       {
         id: recvTransport?.id,
@@ -169,11 +178,9 @@ io.on("connection", (socket: Socket) => {
    */
   socket.on("transport-connect", (roomId, data) => {
     const room = rooms.find((r) => r.roomId == roomId);
+    const user: User = room?.getUser(socket.id);
 
-    const transport:
-      | WebRtcTransport
-      | undefined
-      | Transport = room?.getOneTransport(data.transportId);
+    const transport: WebRtcTransport | undefined = user?.getSendTransport;
 
     try {
       transport?.connect({ dtlsParameters: data.dtlsParameters });
@@ -189,24 +196,29 @@ io.on("connection", (socket: Socket) => {
    */
   socket.on("transport-produce", async (data, fn) => {
     const room = rooms.find((r) => r.roomId == data.roomId);
-
-    const transport:
-      | WebRtcTransport
-      | undefined
-      | Transport = room?.getOneTransport(data.producerOption.transportId);
+    const user: User = room?.getUser(socket.id);
+    const transport: WebRtcTransport | undefined = user?.getSendTransport;
 
     const producer: any | undefined = await transport?.produce(
       data.producerOption
     );
+
     fn(producer?.id);
 
-    const user: any = room?.getUser(socket.id);
     user?.addProducer(producer);
+  });
+
+  socket.on("consumer-done", (roomId, consumerId) => {
+    const room = rooms.find((r) => r.roomId == roomId);
+    const user: User = room?.getUser(socket.id);
+    const consumer = user?.getConsumer(consumerId);
+    consumer?.resume();
   });
 
   socket.on("exit-room", (data) => {
     const room = rooms.find((r) => r.roomId == data);
-    console.log("exit room");
+    const user = room?.getUser(socket.id);
+    console.log("exit room with transport ");
   });
 
   socket.on("message", (room: string, message: string) => {
