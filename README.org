@@ -24,3 +24,7 @@ open /src/config.ts see =webRtcTransportOption=. Change listenIp to your local d
 
 * Planning
 - [ ] Notify all users in room when someone join
+- [ ] Add audio track
+- [ ] Add screenshare
+- [ ] Recording feature
+  
