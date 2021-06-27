@@ -1,0 +1,26 @@
+#+TITLE: SFU Server for Sunarin-Meet
+#+options: toc:nil
+
+* Installation
+*Install all dependencies*
+#+begin_src sh
+ npm install 
+#+end_src
+
+*Create certificates*
+#+begin_src sh
+mkdir certs 
+cd certs
+openssl req -nodes -new -x509 -keyout server.key -out server.cert
+#+end_src
+
+*Config File*
+open /src/config.ts see =webRtcTransportOption=. Change listenIp to your local development ip. Don't set to 127.0.0.1 or localhost.
+
+*Run server*
+#+begin_src sh
+ npm run dev 
+#+end_src
+
+* Planning
+- [ ] Notify all users in room when someone join
