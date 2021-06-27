@@ -1,13 +1,11 @@
-import { types } from "mediasoup";
-import { Router as Rou, WebRtcTransport } from "mediasoup/src/types";
-//import { Transport } from "./Transport";
+import { Router, WebRtcTransport } from "mediasoup/src/types";
 const EventEmitter = require("events").EventEmitter;
 const Logger = require("./Logger");
 const User = require("./User");
 
 export class Room extends EventEmitter {
   private _roomId?: string;
-  private _router?: any;
+  private _router?: Router;
   private _transports?: Array<WebRtcTransport | undefined>;
   private _users?: Array<InstanceType<typeof User>>;
 

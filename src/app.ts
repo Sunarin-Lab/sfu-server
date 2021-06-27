@@ -106,9 +106,13 @@ io.on("connection", (socket: Socket) => {
       room?.users.forEach((u: any) => {
         u.producers.forEach(async (p: any) => {
           const consumer = await recvTransport?.consume({
-            producerId: p?.id as string,
+            producerId: p.id,
             rtpCapabilities: router?.rtpCapabilities,
             paused: true,
+          });
+
+          socket.on("consumer-done", () => {
+            consumer?.resume();
           });
 
           u?.addConsumer(consumer);
@@ -137,13 +141,6 @@ io.on("connection", (socket: Socket) => {
           console.error("Error Connection ", err);
         }
       });
-    });
-
-    socket.on("consumer-done", (data, consumerId) => {
-      const room = rooms.find((r) => r.roomId == roomId);
-      const user = room?.getUser(socket.id);
-      const consumer = user?.getConsumer(consumerId);
-      consumer?.resume();
     });
 
     socket.emit(
@@ -208,7 +205,7 @@ io.on("connection", (socket: Socket) => {
   });
 
   socket.on("exit-room", (data) => {
-    const room = rooms.find((r) => r.roomId == data.roomId);
+    const room = rooms.find((r) => r.roomId == data);
     console.log("exit room");
   });
 
