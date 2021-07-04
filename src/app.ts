@@ -12,13 +12,7 @@ import { createServer, Server as HTTPSServer } from "https";
 
 // MEDIASOUP IMPORT
 import { createWorker, version as mediaSoupVersion } from "mediasoup";
-import {
-  Worker,
-  Router,
-  Producer,
-  MediaKind,
-  WebRtcTransport,
-} from "mediasoup/lib/types";
+import { Worker, Router, Producer, MediaKind, WebRtcTransport } from "mediasoup/lib/types";
 
 // CONSTANTS
 const httpsServer: HTTPSServer = createHTTPSServer();
@@ -93,13 +87,9 @@ io.on("connection", (socket: Socket) => {
 
     const router: Router | undefined = room?.router;
 
-    const sendTransport:
-      | WebRtcTransport
-      | undefined = await router?.createWebRtcTransport(webRtcTransportOptions);
+    const sendTransport: WebRtcTransport | undefined = await router?.createWebRtcTransport(webRtcTransportOptions);
 
-    const recvTransport:
-      | WebRtcTransport
-      | undefined = await router?.createWebRtcTransport(webRtcTransportOptions);
+    const recvTransport: WebRtcTransport | undefined = await router?.createWebRtcTransport(webRtcTransportOptions);
 
     user?.setSendTransport(sendTransport);
     user?.setRecvTransport(recvTransport);
@@ -111,6 +101,7 @@ io.on("connection", (socket: Socket) => {
       // Get all producers of existing user in room
       room?.users.forEach((u: any) => {
         u.producers.forEach(async (p: any) => {
+          // Except user's own audio
           const consumer = await recvTransport?.consume({
             producerId: p.id,
             rtpCapabilities: router?.rtpCapabilities,
@@ -128,7 +119,9 @@ io.on("connection", (socket: Socket) => {
             producerId: consumer?.producerId,
             kind: consumer?.kind,
             rtpParameters: consumer?.rtpParameters,
+            userId: u?.id,
           });
+          // socket.emit("new-consumer", { consumers: user?.consumers, userId: u?.id });
         });
       });
 
@@ -195,9 +188,7 @@ io.on("connection", (socket: Socket) => {
     const user: User = room?.getUser(socket.id);
     const transport: WebRtcTransport | undefined = user?.getSendTransport;
 
-    const producer: any | undefined = await transport?.produce(
-      data.producerOption
-    );
+    const producer: any | undefined = await transport?.produce(data.producerOption);
 
     fn(producer?.id);
 
@@ -230,9 +221,7 @@ function startListen() {
     const { listenIps } = webRtcTransportOptions;
     const ip = listenIps[0];
 
-    console.log(
-      "--------------------running server-------------------------------"
-    );
+    console.log("--------------------running server-------------------------------");
     console.log(`open https://${ip}:${listenPort} in your web browser`);
   });
 }
@@ -265,11 +254,7 @@ async function runMediasoupWorkers() {
   const { numWorkers } = workerOptions;
   const { sslCert, sslKey } = https.certs;
 
-  console.info(
-    "Mediasoup version: %s, running %d workers...",
-    mediaSoupVersion,
-    numWorkers
-  );
+  console.info("Mediasoup version: %s, running %d workers...", mediaSoupVersion, numWorkers);
 
   for (let i = 0; i < numWorkers; ++i) {
     const worker: Worker = await createWorker({

@@ -38,6 +38,10 @@ export class User {
     return this._sendTransports;
   }
 
+  get id(): any {
+    return this._socketId;
+  }
+
   public setRecvTransport(recvTransport: any): void {
     this._recvTransports = recvTransport;
   }
