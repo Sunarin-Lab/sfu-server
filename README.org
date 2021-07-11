@@ -28,5 +28,3 @@ open /src/config.ts see =webRtcTransportOption=. Change listenIp to your local d
 - [X] Add audio track
 - [ ] Add screenshare
 - [ ] Recording feature
-  
-  
