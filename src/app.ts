@@ -48,13 +48,16 @@ io.on("connection", (socket: Socket) => {
     console.log("new client connected with id " + socket.id);
 
     socket.on("createMeet", async (roomId) => {
-        const router = await mediasoupWorkers[0].worker.createRouter({
-            mediaCodecs: codecs,
-        });
+        if (!rooms.find((r) => r?.roomId == roomId)) {
+            const router = await mediasoupWorkers[0].worker.createRouter({
+                mediaCodecs: codecs,
+            });
 
-        const room: Room = new Room(roomId, router);
+            const room: Room = new Room(roomId, router);
+            console.log("Create room ", roomId);
 
-        rooms.push(room);
+            rooms.push(room);
+        }
     });
 
     /**
@@ -70,6 +73,8 @@ io.on("connection", (socket: Socket) => {
 
         const router: Router | undefined = room?.router;
         socket.emit("rtp-capabilities", router?.rtpCapabilities);
+        socket.data.roomId = roomId;
+        console.log("Joining room ", socket.data);
 
         socket.join(roomId);
     });
@@ -93,8 +98,9 @@ io.on("connection", (socket: Socket) => {
         user?.setRecvTransport(recvTransport);
 
         sendTransport?.observer.on("newproducer", (producer) => {
-            socket.to(roomId).emit("new-user", { userId: user.id, producerId: producer.id });
+            socket.to(roomId).emit("new-user-producer", { userId: user.id, producerId: producer.id });
         });
+        console.log(room?.users.length);
 
         socket.on("transport-created", async (roomId) => {
             // Get all producers of existing user in room
@@ -223,14 +229,18 @@ io.on("connection", (socket: Socket) => {
         consumer?.resume();
     });
 
-    socket.on("exit-room", (data) => {
-        const room = rooms.find((r) => r.roomId == data);
-        const user = room?.getUser(socket.id);
-        console.log("exit room with transport ");
-    });
-
-    socket.on("message", (room: string, message: string) => {
-        socket.to(room).emit("new-message", message);
+    /**
+     * ------------------------------------------------
+     * Cleaning User's instance on room
+     * ------------------------------------------------
+     */
+    socket.on("disconnect", (data) => {
+        if (socket.data.roomId) {
+            //console.log("disconnect ", socket.id, " in room ", socket.data.roomId);
+            const room = rooms.find((r) => r.roomId == socket.data.roomId);
+            const user = room?.removeUser(socket.id);
+            socket.to(socket.data.roomId).emit("user-leave", { userId: socket.id });
+        }
     });
 });
 
