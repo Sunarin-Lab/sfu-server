@@ -23,7 +23,7 @@ open /src/config.ts see =webRtcTransportOption=. Change listenIp to your local d
 #+end_src
 
 * Planning
-- [ ] Cleaning transport object once client disconnected
+- [X] Cleaning transport object once client disconnected
 - [X] Notify all users in room when someone join
 - [X] Add audio track
 - [ ] Add screenshare

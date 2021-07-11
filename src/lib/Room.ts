@@ -1,4 +1,4 @@
-import { Router } from "mediasoup/lib/types";
+import { Producer, Router } from "mediasoup/lib/types";
 const EventEmitter = require("events").EventEmitter;
 const Logger = require("./Logger");
 const User = require("./User");
@@ -43,7 +43,21 @@ export class Room extends EventEmitter {
         this._router = router;
     }
 
-    public addUser(user: InstanceType<typeof User>) {
+    public addUser(user: InstanceType<typeof User>): void {
         this._users?.push(user);
+    }
+
+    public removeUser(socketId: string): void {
+        const users: Array<InstanceType<typeof User>> = this.users;
+        const index = users.findIndex((u) => u.id === socketId);
+        if (index === -1) {
+            console.log("Failed to find user");
+        } else {
+            users[index]?.producers.forEach((p: Producer) => {
+                p?.close();
+            });
+            users.splice(index, 1);
+            this._users = users;
+        }
     }
 }
