@@ -1,8 +1,5 @@
 import os from "os";
-import {
-  RtpCodecCapability,
-  WebRtcTransportOptions,
-} from "mediasoup/src/types";
+import { RtpCodecCapability, WebRtcTransportOptions } from "mediasoup/src/types";
 
 /**
  ********************************
@@ -27,20 +24,7 @@ export const workerOptions = {
   numWorkers: Object.keys(os.cpus()).length,
   workerSettings: {
     logLevel: "warn",
-    logTags: [
-      "info",
-      "ice",
-      "dtls",
-      "rtp",
-      "srtp",
-      "rtcp",
-      "rtx",
-      "bwe",
-      "score",
-      "simulcast",
-      "svc",
-      "sctp",
-    ],
+    logTags: ["info", "ice", "dtls", "rtp", "srtp", "rtcp", "rtx", "bwe", "score", "simulcast", "svc", "sctp"],
     rtcMinPort: 40000,
     rtcMaxPort: 49999,
   },
@@ -54,8 +38,8 @@ export const workerOptions = {
 export const webRtcTransportOptions: WebRtcTransportOptions = {
   listenIps: [
     {
-      ip: "192.168.151.1",
-      announcedIp: "192.168.151.1",
+      ip: "10.10.10.15",
+      announcedIp: "10.10.10.15",
     },
   ],
   enableTcp: true,

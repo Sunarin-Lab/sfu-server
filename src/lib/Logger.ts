@@ -1,14 +1,14 @@
 import debug from "debug";
 
-const APP_NAME = "mediasoup-demo-server";
+const APP_NAME = "sunarin-meet";
 
-class Logger {
+export class Logger {
   private _debug;
   private _info;
   private _warn;
   private _error;
 
-  constructor(prefix: string) {
+  constructor(prefix?: string) {
     if (prefix) {
       this._debug = debug(`${APP_NAME}:${prefix}`);
       this._info = debug(`${APP_NAME}:INFO:${prefix}`);
@@ -45,5 +45,3 @@ class Logger {
     return this._error;
   }
 }
-
-module.exports = Logger;

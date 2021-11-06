@@ -1,63 +1,124 @@
-import { Producer, Router } from "mediasoup/lib/types";
+import { ConsumerOptions, Producer, Router, WebRtcTransport } from "mediasoup/lib/types";
+import { webRtcTransportOptions } from "../config";
+import { Server as SocketIOServer, Socket } from "socket.io";
+import { Logger } from "./Logger";
+import { Peer } from "./Peer";
+
 const EventEmitter = require("events").EventEmitter;
-const Logger = require("./Logger");
-const User = require("./User");
+const logger = new Logger("Room");
+
+export type RoomType = typeof Room;
 
 export class Room extends EventEmitter {
-    private _roomId?: string;
-    private _router?: Router;
-    private _users?: Array<InstanceType<typeof User>>;
+  private _roomId: string;
+  private _router: Router;
+  private _io: SocketIOServer;
+  private _users: Map<string, Peer>;
 
-    constructor(roomId: string, router: any) {
-        super();
-        this._roomId = roomId;
-        this._router = router;
-        this._users = new Array<InstanceType<typeof User>>();
-    }
+  constructor(roomId: string, router: Router, io: SocketIOServer) {
+    super();
+    this._roomId = roomId;
+    this._router = router;
+    this._io = io;
+    this._users = new Map<string, Peer>();
+  }
 
-    get roomId(): string | undefined {
-        return this._roomId;
-    }
+  // Broadcast peer in a room to create consumer whenever producer created
+  // Called from Peer.ts
+  public broadcastNewProducer(consumerOptions: ConsumerOptions, socketId: string, username: string) {
+    this._broadcast().emit("new-producer", {
+      options: consumerOptions,
+      socketId: socketId,
+      username: username,
+    });
+  }
 
-    get router(): any | undefined {
-        return this._router;
-    }
+  private _broadcast() {
+    return this._io.to(this._roomId);
+  }
 
-    get transports(): any {
-        return this._transports;
-    }
+  public async createWebRtcTransport() {
+    return await this._router.createWebRtcTransport(webRtcTransportOptions);
+  }
 
-    get users(): any {
-        return this._users;
-    }
+  /**
+   * Generate array from set of users
+   */
+  public getUsers() {
+    const users: Map<string, string> = new Map();
+    this._users.forEach((value: Peer, key, map) => {
+      users.set(key, value.name);
+    });
 
-    public getUser(socketId: string): InstanceType<typeof User> {
-        return this._users?.find((t) => t?._socketId == socketId);
-    }
+    return Array.from(users);
+  }
 
-    set roomId(roomId: string | undefined) {
-        this._roomId = roomId;
-    }
+  public getUser(socketId: string): Peer | undefined {
+    return this._users?.get(socketId);
+  }
 
-    set router(router: any | undefined) {
-        this._router = router;
-    }
+  /**
+   * Get producers in room except caller's proucers
+   */
+  public getProducers(caller: Peer, transport: WebRtcTransport | undefined): void {
+    this._users.forEach((u: Peer) => {
+      u?.producers?.forEach(async (p: any) => {
+        if (u.socket.id != caller.socket.id) {
+          // Except user's own audio
+          const consumer = await transport?.consume({
+            producerId: p.id,
+            rtpCapabilities: this._router.rtpCapabilities,
+            paused: true,
+          });
 
-    public addUser(user: InstanceType<typeof User>): void {
-        this._users?.push(user);
-    }
+          caller.socket.emit("new-consumer", {
+            id: consumer?.id,
+            producerId: consumer?.producerId,
+            kind: consumer?.kind,
+            rtpParameters: consumer?.rtpParameters,
+            socketId: u?.socket.id, // producer socket id
+            peerName: u?.name,
+          });
 
-    public removeUser(socketId: string): void {
-        const users: Array<InstanceType<typeof User>> = this.users;
-        const index = users.findIndex((u) => u.id === socketId);
-        if (index === -1) {
-            console.log("Failed to find user");
-        } else {
-            users[index]?.producers.forEach((p: Producer) => {
-                p?.close();
-            });
-            users.splice(index, 1);
-            this._users = users;
+          caller.socket.on("consumer-done", () => {
+            consumer?.resume();
+          });
         }
-    }
+      });
+    });
+  }
+
+  public addUser(peer: Peer): void {
+    this._users?.set(peer.socket.id, peer);
+  }
+
+  public removeUser(peer: Peer): void {
+    this._users.delete(peer.socket.id);
+    this._broadcast().emit("user-leave", { socketId: peer.socket.id, peerName: peer.name });
+  }
+
+  // GETTERS AND SETTERS
+  get roomId(): string {
+    return this._roomId;
+  }
+
+  get router(): any {
+    return this._router;
+  }
+
+  get transports(): any {
+    return this._transports;
+  }
+
+  get users(): any {
+    return this._users;
+  }
+
+  set roomId(roomId: string) {
+    this._roomId = roomId;
+  }
+
+  set router(router: any) {
+    this._router = router;
+  }
 }
