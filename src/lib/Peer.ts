@@ -1,5 +1,4 @@
-import { Producer, Consumer, ConsumerOptions, WebRtcTransport, WebRtcTransportOptions } from "mediasoup/lib/types";
-import { getProducerRtpParametersMapping } from "mediasoup/src/ortc";
+import { Producer, Consumer, ConsumerOptions, WebRtcTransport, ActiveSpeakerObserver } from "mediasoup/node/lib/types";
 import { Socket } from "socket.io";
 import { Logger } from "./Logger";
 import { Room } from "./Room";
@@ -111,7 +110,7 @@ export class Peer extends EventEmitter {
       });
     });
 
-    sendTransport.observer.on("newproducer", (producer) => {
+    sendTransport.observer.on("newproducer", (producer: Producer) => {
       logger.info("new producer created ", producer.id);
       const consumerOptions: ConsumerOptions = {
         producerId: producer.id,

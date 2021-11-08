@@ -4,7 +4,7 @@ process.env.DEBUG = process.env.DEBUG || "*INFO* *WARN* *ERROR*";
 
 import fs from "fs";
 // LOCAL IMPORT
-import { Room, RoomType } from "./lib/Room";
+import { Room } from "./lib/Room";
 import { Peer } from "./lib/Peer";
 import { Logger } from "./lib/Logger";
 import { https, codecs, webRtcTransportOptions, workerOptions } from "./config";
@@ -16,7 +16,7 @@ import { createServer, Server as HTTPSServer } from "https";
 
 // MEDIASOUP IMPORT
 import { createWorker, version as mediasoupVersion } from "mediasoup";
-import { Worker } from "mediasoup/lib/types";
+import { Worker } from "mediasoup/node/lib/types";
 
 // CONSTANTS
 const logger = new Logger();
@@ -83,10 +83,8 @@ io.on("connection", (socket: Socket) => {
       console.log("creating " + socket.id + "in room" + roomId);
 
       if (room != undefined) {
-        io
-          .to(roomId)
-          .emit("new-user-joined", { socketId: socket.id, name: name });
-      //   // Plain implementation
+        io.to(roomId).emit("new-user-joined", { socketId: socket.id, name: name });
+        //   // Plain implementation
         const users = room.getUsers();
         logger.info(users);
         socket.emit("peers-in-room", users);
@@ -110,9 +108,7 @@ function startListen() {
     const ip = listenIps[0];
 
     logger.info(ip["valueOf"]);
-    logger.info(
-      "--------------------running server-------------------------------"
-    );
+    logger.info("--------------------running server-------------------------------");
     logger.info(`open https://${ip}:${listenPort} in your web browser`);
   });
 }
@@ -145,11 +141,7 @@ async function runMediasoupWorkers() {
   const { numWorkers } = workerOptions;
   const { sslCert, sslKey } = https.certs;
 
-  console.info(
-    "Mediasoup version: %s, running %d workers...",
-    mediasoupVersion,
-    numWorkers
-  );
+  console.info("Mediasoup version: %s, running %d workers...", mediasoupVersion, numWorkers);
 
   for (let i = 0; i < numWorkers; ++i) {
     const worker: Worker = await createWorker({

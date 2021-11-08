@@ -1,19 +1,19 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "description": "",
+  "description": "SFU server",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/app.ts"
   },
   "keywords": [],
-  "author": "",
+  "author": "jikope",
   "license": "ISC",
   "dependencies": {
     "@types/debug": "^4.1.5",
     "express": "^4.17.1",
-    "mediasoup": "^3.7.15",
+    "mediasoup": "^3.9.1",
     "socket.io": "^4.1.2"
   },
   "devDependencies": {

@@ -1,5 +1,5 @@
 import os from "os";
-import { RtpCodecCapability, WebRtcTransportOptions } from "mediasoup/src/types";
+import { RtpCodecCapability, WebRtcTransportOptions } from "mediasoup/node/lib/types";
 
 /**
  ********************************

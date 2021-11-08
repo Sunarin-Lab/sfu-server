@@ -1,4 +1,4 @@
-import { ConsumerOptions, Producer, Router, WebRtcTransport } from "mediasoup/lib/types";
+import { ConsumerOptions, Producer, Router, WebRtcTransport } from "mediasoup/node/lib/types";
 import { webRtcTransportOptions } from "../config";
 import { Server as SocketIOServer, Socket } from "socket.io";
 import { Logger } from "./Logger";
