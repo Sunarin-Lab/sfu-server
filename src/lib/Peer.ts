@@ -41,9 +41,11 @@ export class Peer extends EventEmitter {
     this._transport.set("send", sendTransport);
     this._transport.set("recv", recvTransport);
 
-    this._socket.emit("transport-options", {
-      send: this.createTransportOptions(sendTransport),
-      recv: this.createTransportOptions(recvTransport),
+    this._socket.on("transport-created", () => {
+      const transport: WebRtcTransport | undefined = this._transport.get("recv");
+      logger.info("Recv COnnect");
+      ///this._joinedTo.getAllProducer(this._socket.id);
+      this._joinedTo.getProducers(this, transport);
     });
 
     // Event listeners
@@ -52,12 +54,6 @@ export class Peer extends EventEmitter {
 
       try {
         transport?.connect({ dtlsParameters: dtlsParams });
-
-        if (transportType == "recv") {
-          logger.info("Recv COnnect");
-          ///this._joinedTo.getAllProducer(this._socket.id);
-          this._joinedTo.getProducers(this, transport);
-        }
       } catch (err) {
         logger.error("Error connecting transport ", err);
       }
@@ -124,6 +120,11 @@ export class Peer extends EventEmitter {
     this._socket.on("disconnect", () => {
       const room = this._joinedTo;
       room?.removeUser(this);
+    });
+
+    this._socket.emit("transport-options", {
+      send: this.createTransportOptions(sendTransport),
+      recv: this.createTransportOptions(recvTransport),
     });
   }
 
