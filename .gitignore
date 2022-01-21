@@ -9,6 +9,9 @@
 *.key
 *.csr
 
+./certs/script.sh
+./src/config.ts
+
 # dependencies
 /node_modules
 /.pnp
