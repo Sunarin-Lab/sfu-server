@@ -1,7 +1,16 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 *.cert
+*.crt
+*.ext
+*.pem
+*.srl
+*.srl
 *.key
+*.csr
+
+./certs/script.sh
+./src/config.ts
 
 # dependencies
 /node_modules
