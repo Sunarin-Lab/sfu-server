@@ -45,12 +45,12 @@ run().catch((err) => {
     process.exit(1);
 });
 
-// SOCKET IO EVENTS
+// WEBSOCKET EVENTS
 io.on("connection", (socket: Socket) => {
     logger.info("new client connected with id " + socket.id);
 
     // Should generate random UUID and send to client
-    socket.on("createMeet", async (roomId) => {
+    socket.on("createMeet", async (roomId, name) => {
         if (!rooms.has(roomId)) {
             const router = await getMediasoupWorker().createRouter({
                 mediaCodecs: codecs,
@@ -60,6 +60,8 @@ io.on("connection", (socket: Socket) => {
             logger.info("Creating room with id ", roomId);
 
             rooms.set(roomId, room);
+            room!.owner = name;
+            socket.emit("room-created", roomId);
         }
     });
 
@@ -74,40 +76,62 @@ io.on("connection", (socket: Socket) => {
         console.log(error);
     });
 
+    socket.on("before-join", (roomId) => {
+        if (roomId != null) {
+            const room: Room | undefined = rooms.get(roomId);
+
+            if (room != undefined) {
+                const capabilities = room?.router.rtpCapabilities;
+                socket.emit("rtp-capabilities", capabilities);
+
+            } else {
+                socket.emit("room-not-found", (roomId));
+            }
+        }
+
+    });
+
     /**
      * ------------------------------------------------
      * WHEN NEW USER JOIN MEET
      * ------------------------------------------------
      */
-    socket.on("joinMeet", async (roomId, name) => {
+    socket.on("joinMeet", async (roomId, name, userId) => {
         if (roomId != null) {
             const room: Room | undefined = rooms.get(roomId);
-            console.log("creating " + socket.id + "in room" + roomId);
+            console.log("creating " + socket.id + "in room " + roomId);
+            const capabilities = room?.router.rtpCapabilities;
+            socket.emit("rtp-capabilities", capabilities);
 
             if (room != undefined) {
+
                 io.to(roomId).emit("new-user-joined", { socketId: socket.id, name: name });
                 // Plain implementation
                 const users = room.getUsers();
                 logger.info(users);
+
                 socket.emit("peers-in-room", users);
                 // Should add user auth
                 const newUser: Peer = new Peer(socket, name, room);
                 await newUser.handleSync();
-                logger.info("after peer");
-
                 room?.addUser(newUser);
+
+                if (room?.owner != null && room?.owner == name) {
+                    socket.emit("room-owner");
+                }
             }
         }
     });
 
     // From client
-    socket.on('start-recording', async (roomId) => {
+    socket.on('start-recording', async (roomId, userId) => {
         const room: Room | undefined = rooms.get(roomId);
 
         if (!room?.isRecording) {
             const data = {
                 room_id: roomId,
-                owner_id: socket.id
+                owner_id: socket.id,
+                user_id: userId
             };
 
             const create_res = await fetch('http://localhost:8080/recording-create', {
@@ -142,14 +166,18 @@ io.on("connection", (socket: Socket) => {
             };
 
             room!.isRecording = false;
+            socket.emit('recording-stopped');
 
-            await fetch('http://localhost:8080/recording-stop', {
+            const stopRecord = await fetch('http://localhost:8080/recording-stop', {
                 method: 'POST',
                 body: JSON.stringify(data),
                 headers: { 'Content-Type': 'application/json' }
             });
 
-            io.to(roomId).emit('recording-stopped');
+            const res = await stopRecord.json();
+            console.log(res);
+
+            socket.emit('recording-done', res.filename);
         }
     });
 });

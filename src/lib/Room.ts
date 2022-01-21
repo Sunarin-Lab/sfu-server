@@ -15,6 +15,7 @@ export class Room extends EventEmitter {
     private _io: SocketIOServer;
     private _users: Map<string, Peer>;
     private _isRecording: boolean = false;
+    public owner: string | null = null;
 
     constructor(roomId: string, router: Router, io: SocketIOServer) {
         super();
@@ -40,6 +41,14 @@ export class Room extends EventEmitter {
 
     public async createWebRtcTransport() {
         return await this._router.createWebRtcTransport(webRtcTransportOptions);
+    }
+
+    public getRoomOwnerSocketId() {
+        return this._users.forEach((peer: Peer, key, map) => {
+            if (peer.name === this.owner) {
+                return peer.socket.id;
+            }
+        });
     }
 
     /**
