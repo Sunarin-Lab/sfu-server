@@ -7,15 +7,11 @@
  npm install 
 #+end_src
 
-*Create certificates*
-#+begin_src sh
-mkdir certs 
-cd certs
-openssl req -nodes -new -x509 -keyout server.key -out server.cert
-#+end_src
+*Create certificates* \\
+Use ~/certs/script.sh~ to create certificate.
 
-*Config File*
-open /src/config.ts see =webRtcTransportOption=. Change listenIp to your local development ip. Don't set to 127.0.0.1 or localhost.
+*Config File* \\
+Open /src/config.ts see =webRtcTransportOption=. Change listenIp to your local development ip. Don't set to 127.0.0.1 or localhost.
 
 *Run server*
 #+begin_src sh
@@ -29,27 +25,3 @@ open /src/config.ts see =webRtcTransportOption=. Change listenIp to your local d
 - [ ] Add screenshare
 - [X] Recording feature
 
-* Flow
-** Create meet
-1. Input room id
-2. Create Room object
-3. Create mediasoup router and set as room property   
-
-** Join Meet
-Refer to [[https://mediasoup.org/documentation/v3/communication-between-client-and-server/][Guidelines for mediasoup-client and libmediasoupclient]]
-1. User join to a room with id as an argument (client)
-2. Create Peer object (server) and join to Room
-3. Create 2 webrtctransport for send and recv (server)
-4. Send transport options to user (server)
-5. Create correspondent send recv client transport (client)
-6. Sync/Ask server to connect client transport.
-
-** Producing
-1. Get user's media devices (client)
-2. Create producer with send transport with paused state (client)
-3. Sync/Ask server to create producer instance on server (client)
-4. Get user transport (server)
-5. Produce on transport with producer options from client (server)
-
-** Recording   
-1. Map each producer to *PlainRtpTransport* 

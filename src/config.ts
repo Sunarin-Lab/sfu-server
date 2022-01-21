@@ -10,8 +10,8 @@ export const https = {
   listenIP: "0.0.0.0",
   listenPort: "5000",
   certs: {
-    sslKey: "./certs/sfu.server.key",
-    sslCert: "./certs/sfu.server.crt",
+    sslKey: "YOURKEY",
+    sslCert: "YOURCERT",
   },
 };
 
@@ -38,8 +38,8 @@ export const workerOptions = {
 export const webRtcTransportOptions: WebRtcTransportOptions = {
   listenIps: [
     {
-      ip: "10.10.10.12",
-      announcedIp: "10.10.10.12",
+      ip: "YOURIP",
+      announcedIp: "YOURIP",
     },
   ],
   enableTcp: true,
